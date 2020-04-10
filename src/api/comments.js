@@ -5,13 +5,26 @@ const app       = require("../app.js");
 app.route("/api/comments/create")
     .get((req, res) => res.status(503).send({ status: "ERROR"}))
     .post((req, res) => {
-        const sqlConnection = mysql.createConnection(sqlConfig);
+        if (typeof req.body.articleId !== "string" || req.body.articleId === "") {
+            res.status(503).send({ status: "ERROR", extra: "Vous devez renseigner id de l'article" });
+            return;
+        }
+        if (typeof req.body.content !== "string" || req.body.content === "") {
+            res.status(503).send({ status: "ERROR", extra: "Le contenu de du commentaires est vide" });
+            return;
+        }
+        if (typeof req.body.author !== "string" || req.body.author === "") {
+            res.status(503).send({ status: "ERROR", extra: "L'auteur n'est pas renseigné" });
+            return;
+        }
 
+        const sqlConnection = mysql.createConnection(sqlConfig);
         sqlConnection.query(
-            "INSERT INTO node_comments(articles_id, author, content) VALUES (?,?,?);",
-            [req.body.articles_id, req.body.author, req.body.content],
+            "INSERT INTO node_comments(article_id, content, author) VALUES (?, ?, ?);",
+            [ req.body.articleId, req.body.content, req.body.author ],
             (error, result) => {
                 if (error) {
+                    console.log(error);
                     res.status(503).send({ status: "ERROR" });
                 } else {
                     console.log(result);
